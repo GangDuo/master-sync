@@ -21,20 +21,13 @@ namespace Master.Sync
             {
                 input = new StreamReader(args[0], Encoding.GetEncoding("Shift_JIS"));
             }
-            Cat(input);
-            input.Dispose();
-        }
 
-        static void Cat(TextReader tr)
-        {
-            string line;
-            int num = 1;
-
-            while ((line = tr.ReadLine()) != null)
+            using (var csv = new CsvHelper.CsvReader(input))
             {
-                Console.WriteLine("{0, 10} : {1}", num, line);
-                num++;
+                var source = csv.GetRecords<Supplier>().ToList();
+                Console.WriteLine(source.Count);
             }
+            input.Dispose();
         }
     }
 }
