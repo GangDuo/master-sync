@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Master.Sync
 {
-    class Supplier
+    class Supplier : IEquatable<Supplier>
     {
         [Index(0)]
         public string Code { get; set; }
@@ -30,5 +30,23 @@ namespace Master.Sync
 
         [Index(13)]
         public string Fax { get; set; }
+
+        public bool Equals(Supplier other)
+        {
+            if (other is null)
+                return false;
+
+            return this.Name == other.Name &&
+                this.Code == other.Code;// &&
+#if false
+            this.Postcode == other.Postcode &&
+            this.Prefecture == other.Prefecture &&
+            this.Address1 == other.Address1 &&
+            this.Tel == other.Tel &&
+            this.Fax == other.Fax;
+#endif
+        }
+        public override bool Equals(object obj) => Equals(obj as Supplier);
+        public override int GetHashCode() => (Name, Code).GetHashCode();
     }
 }
