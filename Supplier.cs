@@ -18,6 +18,21 @@ namespace Master.Sync
 
         [Index(8)]
         public string Postcode { get; set; }
+        public object PostcodeAsNumberOrDbNull
+        {
+            get
+            {
+                uint postcode;
+                if(uint.TryParse(Postcode.Replace("-", ""), out postcode))
+                {
+                    return postcode;
+                }
+                else
+                {
+                    return DBNull.Value;
+                }
+            }
+        }
 
         [Index(9)]
         public string Prefecture { get; set; }

@@ -31,30 +31,51 @@ namespace Master.Sync
                     Console.WriteLine("Connecting to MySQL...");
                     conn.Open();
                     // Perform database operations
-                    string sql = "SELECT * FROM suppliers;";
+                    const string tableName = "suppliers_tmp";
+                    string sql = String.Format("SELECT * FROM `{0}`;", tableName);
                     var adapter = new MySqlDataAdapter(sql, conn);
                     MySqlCommandBuilder cb = new MySqlCommandBuilder(adapter);
+                    //adapter.InsertCommand = cb.GetInsertCommand();
+                    //adapter.UpdateCommand = cb.GetUpdateCommand();
+                    //adapter.DeleteCommand = cb.GetDeleteCommand();
+
+                    var id = new MySqlParameter("@id", MySqlDbType.UInt64, 0, "id");
+                    var code = new MySqlParameter("@code", MySqlDbType.String, 0, "code");
+                    var name = new MySqlParameter("@name", MySqlDbType.String, 0, "name");
+
+                    //adapter.InsertCommand = new MySqlCommand(@"INSERT INTO suppliers (code, name) VALUES (@code, @name)");
+                    //adapter.InsertCommand.Parameters.Add(id);
+                    //adapter.InsertCommand.Parameters.Add(name);
+
+                    adapter.UpdateCommand = new MySqlCommand(String.Format(@"UPDATE `{0}` SET `code` = @code, `name` = @name WHERE (`id` = @id)", tableName));
+                    adapter.UpdateCommand.Parameters.Add(code);
+                    adapter.UpdateCommand.Parameters.Add(name);
+                    adapter.UpdateCommand.Parameters.Add(id).SourceVersion = DataRowVersion.Original;
 
                     var data = new DataSet();
-                    adapter.Fill(data, "suppliers");
-                    Console.WriteLine(data.Tables["suppliers"].Rows.Count);
+                    adapter.Fill(data, tableName);
+                    Console.WriteLine(data.Tables[tableName].Rows.Count);
 
                     // テーブルの差分を取得
                     var first = source.Select(x => new Supplier()
                     {
                         Code = x.Code,
-                        Name = x.Name
+                        Name = x.Name,
+                        Postcode = x.Postcode,
+                        Prefecture = x.Prefecture,
+                        Address1 = x.Address1,
+                        Tel = x.Tel,
+                        Fax = x.Fax,
                     });
-                    var second = data.Tables["suppliers"].AsEnumerable().Select(row => new Supplier()
+                    var second = data.Tables[tableName].AsEnumerable().Select(row => new Supplier()
                     {
                         Code = row["code"].ToString(),
                         Name = row["name"].ToString(),
-                        //Postcode = row[""].ToString(),
-                        //Prefecture = row[""].ToString(),
-                        //Address1 = row[""].ToString(),
-                        //Tel = row[""].ToString(),
-                        //Fax = row[""].ToString()
-
+                        Postcode = row["postal_code"].ToString(),
+                        Prefecture = row["prefecture"].ToString(),
+                        Address1 = row["address1"].ToString(),
+                        Tel = row["tel"].ToString(),
+                        Fax = row["fax"].ToString(),
                     });
                     // 完全一位を除外
                     var deff = first.Except(second);
@@ -63,20 +84,25 @@ namespace Master.Sync
                         if (second.Where(x => x.Code == supplier.Code).Count() > 0)
                         {
                             // 修正
-                            var a = data.Tables["suppliers"].AsEnumerable().Where(row => row["code"].ToString() == supplier.Code).First();
+                            var a = data.Tables[tableName].AsEnumerable().Where(row => row["code"].ToString() == supplier.Code).First();
                             a["name"] = supplier.Name;
                         }
                         else
                         {
                             // 新規
-                            var row = data.Tables["suppliers"].NewRow();
+                            var row = data.Tables[tableName].NewRow();
                             row["code"] = supplier.Code;
                             row["name"] = supplier.Name;
-                            data.Tables["suppliers"].Rows.Add(row);
+                            row["postal_code"] = supplier.PostcodeAsNumberOrDbNull;
+                            row["prefecture"] = supplier.Prefecture;
+                            row["address1"] = supplier.Address1;
+                            row["tel"] = supplier.Tel;
+                            row["fax"] = supplier.Fax;
+                            data.Tables[tableName].Rows.Add(row);
                         }
                     }
                     //データベース更新
-                    var updatedRowCount = adapter.Update(data, "suppliers");
+                    var updatedRowCount = adapter.Update(data, tableName);
                     //データ更新終了をDataTableに伝える
                     data.AcceptChanges();
                     Debug.WriteLine("更新された行数: " + updatedRowCount);
