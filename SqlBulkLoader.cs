@@ -31,7 +31,7 @@ namespace Master.Sync
                     Console.WriteLine("Connecting to MySQL...");
                     conn.Open();
                     // Perform database operations
-                    const string tableName = "suppliers_tmp";
+                    const string tableName = "suppliers";
                     string sql = String.Format("SELECT * FROM `{0}`;", tableName);
                     var adapter = new MySqlDataAdapter(sql, conn);
                     MySqlCommandBuilder cb = new MySqlCommandBuilder(adapter);
@@ -81,6 +81,7 @@ namespace Master.Sync
                     var deff = first.Except(second);
                     foreach (var supplier in deff)
                     {
+                        Console.WriteLine(@"code: {0}, name: {1}", supplier.Code, supplier.Name);
                         if (second.Where(x => x.Code == supplier.Code).Count() > 0)
                         {
                             // 修正
@@ -105,7 +106,7 @@ namespace Master.Sync
                     var updatedRowCount = adapter.Update(data, tableName);
                     //データ更新終了をDataTableに伝える
                     data.AcceptChanges();
-                    Debug.WriteLine("更新された行数: " + updatedRowCount);
+                    Console.WriteLine("更新された行数: " + updatedRowCount);
                 }
                 catch (Exception ex)
                 {
