@@ -46,13 +46,17 @@ namespace Master.Sync
         [Index(13)]
         public string Fax { get; set; }
 
+        [Index(22)]
+        public string PaymentDate { get; set; }
+
         public bool Equals(Supplier other)
         {
             if (other is null)
                 return false;
 
             return this.Name == other.Name &&
-                this.Code == other.Code;// &&
+                this.Code == other.Code &&
+                this.PaymentDate == other.PaymentDate;
 #if false
             this.Postcode == other.Postcode &&
             this.Prefecture == other.Prefecture &&

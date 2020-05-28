@@ -42,14 +42,16 @@ namespace Master.Sync
                     var id = new MySqlParameter("@id", MySqlDbType.UInt64, 0, "id");
                     var code = new MySqlParameter("@code", MySqlDbType.String, 0, "code");
                     var name = new MySqlParameter("@name", MySqlDbType.String, 0, "name");
+                    var paymentDate = new MySqlParameter("@payment_date", MySqlDbType.String, 0, "payment_date");
 
                     //adapter.InsertCommand = new MySqlCommand(@"INSERT INTO suppliers (code, name) VALUES (@code, @name)");
                     //adapter.InsertCommand.Parameters.Add(id);
                     //adapter.InsertCommand.Parameters.Add(name);
 
-                    adapter.UpdateCommand = new MySqlCommand(String.Format(@"UPDATE `{0}` SET `code` = @code, `name` = @name WHERE (`id` = @id)", tableName));
+                    adapter.UpdateCommand = new MySqlCommand(String.Format(@"UPDATE `{0}` SET `code` = @code, `name` = @name, `payment_date` = @payment_date WHERE (`id` = @id)", tableName));
                     adapter.UpdateCommand.Parameters.Add(code);
                     adapter.UpdateCommand.Parameters.Add(name);
+                    adapter.UpdateCommand.Parameters.Add(paymentDate);
                     adapter.UpdateCommand.Parameters.Add(id).SourceVersion = DataRowVersion.Original;
 
                     var data = new DataSet();
@@ -66,6 +68,7 @@ namespace Master.Sync
                         Address1 = x.Address1,
                         Tel = x.Tel,
                         Fax = x.Fax,
+                        PaymentDate = x.PaymentDate,
                     });
                     var second = data.Tables[tableName].AsEnumerable().Select(row => new Supplier()
                     {
@@ -76,6 +79,7 @@ namespace Master.Sync
                         Address1 = row["address1"].ToString(),
                         Tel = row["tel"].ToString(),
                         Fax = row["fax"].ToString(),
+                        PaymentDate = row["payment_date"].ToString(),
                     });
                     // 完全一位を除外
                     var deff = first.Except(second);
@@ -87,6 +91,7 @@ namespace Master.Sync
                             // 修正
                             var a = data.Tables[tableName].AsEnumerable().Where(row => row["code"].ToString() == supplier.Code).First();
                             a["name"] = supplier.Name;
+                            a["payment_date"] = supplier.PaymentDate;
                         }
                         else
                         {
@@ -99,6 +104,7 @@ namespace Master.Sync
                             row["address1"] = supplier.Address1;
                             row["tel"] = supplier.Tel;
                             row["fax"] = supplier.Fax;
+                            row["payment_date"] = supplier.PaymentDate;
                             data.Tables[tableName].Rows.Add(row);
                         }
                     }
